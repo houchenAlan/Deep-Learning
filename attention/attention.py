@@ -7,7 +7,16 @@ import numpy as np
 import random as random
 import json
 
-def preprocess_data(dataset, human_vocab, machine_vocab, Tx, Ty):
+
+def tokenize(sentence, vocab, length):
+    tokens = [0] * length
+    for i in range(length):
+        char = sentence[i] if i < len(sentence) else "<pad>"
+        char = char if (char in vocab) else "<unk>"
+        tokens[i] = vocab[char]
+    return tokens
+
+def readyData(dataset, human_vocab, machine_vocab, Tx, Ty):
     m = len(dataset)
     X = np.zeros([m, Tx], dtype='int32')
     Y = np.zeros([m, Ty], dtype='int32')
@@ -19,15 +28,8 @@ def preprocess_data(dataset, human_vocab, machine_vocab, Tx, Ty):
     Yoh = oh_2d(Y, len(machine_vocab))
     return (X, Y, Xoh, Yoh)
 
-def tokenize(sentence, vocab, length):
-    tokens = [0] * length
-    for i in range(length):
-        char = sentence[i] if i < len(sentence) else "<pad>"
-        char = char if (char in vocab) else "<unk>"
-        tokens[i] = vocab[char]
-    return tokens
 
-def ids_to_keys(sentence, vocab):
+def ids2keys(sentence, vocab):
     return [list(vocab.keys())[id] for id in sentence]
 
 def oh_2d(dense, max_value):
@@ -40,7 +42,7 @@ def oh_2d(dense, max_value):
 def get_prediction(model, x):
     prediction = model.predict(x)
     max_prediction = [y.argmax() for y in prediction]
-    str_prediction = "".join(ids_to_keys(max_prediction, machine_vocab))
+    str_prediction = "".join(ids2keys(max_prediction, machine_vocab))
     return (max_prediction, str_prediction)
 def get_model(Tx, Ty, layer1_size, layer2_size, x_vocab_size, y_vocab_size):
     X = Input(shape=(Tx, x_vocab_size))
@@ -83,23 +85,13 @@ machine_vocab_size = len(machine_vocab)
 m = len(dataset)
 Tx = 41
 Ty = 5
-X, Y, Xoh, Yoh = preprocess_data(dataset, human_vocab, machine_vocab, Tx, Ty)
+X, Y, Xoh, Yoh = readyData(dataset, human_vocab, machine_vocab, Tx, Ty)
 train_size = int(0.8*m)
 Xoh_train = Xoh[:train_size]
 Yoh_train = Yoh[:train_size]
 Xoh_test = Xoh[train_size:]
 Yoh_test = Yoh[train_size:]
 i = 4
-print("Input data point " + str(i) + ".")
-print("")
-print("The data input is: " + str(dataset[i][0]))
-print("The data output is: " + str(dataset[i][1]))
-print("")
-print("The tokenized input is:" + str(X[i]))
-print("The tokenized output is: " + str(Y[i]))
-print("")
-print("The one-hot input is:", Xoh[i])
-print("The one-hot output is:", Yoh[i])
 layer1_size = 32
 layer2_size = 64
 at_repeat = RepeatVector(Tx)
@@ -117,10 +109,8 @@ model.fit([Xoh_train], outputs_train, epochs=30, batch_size=100)
 outputs_test = list(Yoh_test.swapaxes(0,1))
 score = model.evaluate(Xoh_test, outputs_test)
 print('Test loss: ', score[0])
-
 i = random.randint(0, m)
 max_prediction, str_prediction = get_prediction(model, Xoh[i:i+1])
-
 print("Input: " + str(dataset[i][0]))
 print("Tokenized: " + str(X[i]))
 print("Prediction: " + str(max_prediction))
