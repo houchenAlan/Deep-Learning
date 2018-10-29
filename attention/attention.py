@@ -15,7 +15,6 @@ def tokenize(sentence, vocab, length):
         char = char if (char in vocab) else "<unk>"
         tokens[i] = vocab[char]
     return tokens
-
 def readyData(dataset, human_vocab, machine_vocab, Tx, Ty):
     m = len(dataset)
     X = np.zeros([m, Tx], dtype='int32')
@@ -58,7 +57,6 @@ def one_step_of_attention(h_prev, a):
     i = at_dense2(i)
     attention = at_softmax(i)
     context = at_dot([attention, a])
-
     return context
 def softmax(x):
     return K.softmax(x, axis=1)
@@ -69,13 +67,9 @@ def attention_layer(X, n_h, Ty):
     output = []
     for _ in range(Ty):
         context = one_step_of_attention(h, X)
-
         h, _, c = at_LSTM(context, initial_state=[h, c])
-
         output.append(h)
-
     return output
-
 with open('data/Time Dataset.json', 'r') as f:
     dataset = json.loads(f.read())
 with open('data/Time Vocabs.json', 'r') as f:
@@ -91,7 +85,6 @@ Xoh_train = Xoh[:train_size]
 Yoh_train = Yoh[:train_size]
 Xoh_test = Xoh[train_size:]
 Yoh_test = Yoh[train_size:]
-i = 4
 layer1_size = 32
 layer2_size = 64
 at_repeat = RepeatVector(Tx)
